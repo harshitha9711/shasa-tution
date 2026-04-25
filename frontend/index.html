@@ -134,7 +134,9 @@
 
 const BASE = "https://shasa-backend.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user) window.location.href="login.html";
+if (!user) {
+  window.location.replace("login.html");
+}
 
 // ================= DASHBOARD =================
 async function loadDashboard(){
@@ -218,15 +220,26 @@ async function deleteStudent(id){
 let attendance={};
 
 async function startAttendance(){
-  const res=await fetch(`${BASE}/students/${user.school_id}`);
-  const students=await res.json();
+  const check = await fetch(`${BASE}/attendance-check/${user.school_id}`);
+  const r = await check.json();
 
-  attendanceList.innerHTML="";
+  if (r.exists) {
+    alert("Attendance already taken today ❌");
+    return;
+  }
+
+  const res = await fetch(`${BASE}/students/${user.school_id}`);
+  const students = await res.json();
+
+  const list = document.getElementById("attendanceList");
+  list.innerHTML = "";
+
+  attendance = {};
 
   students.forEach(s=>{
-    attendance[s.id]="present";
+    attendance[s.id] = "present";
 
-    attendanceList.innerHTML+=`
+    list.innerHTML += `
     <li id="row-${s.id}">
       ${s.name}
       <div>
@@ -236,15 +249,8 @@ async function startAttendance(){
     </li>`;
   });
 
-  attendanceList.innerHTML+=`<button onclick="saveAttendance()" class="blue">Save</button>`;
+  list.innerHTML += `<button onclick="saveAttendance()" class="blue">Save</button>`;
 }
-
-function mark(id,status){
-  attendance[id]=status;
-  document.getElementById(`row-${id}`).style.background =
-    status==="present" ? "#d1fae5" : "#fee2e2";
-}
-
 async function saveAttendance(){
   const records=Object.keys(attendance).map(id=>({student_id:id,status:attendance[id]}));
 

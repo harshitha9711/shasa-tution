@@ -92,13 +92,20 @@ app.put("/students/:id", async (req,res)=>{
   res.json("updated");
 });
 
+
 // ATTENDANCE
-app.get("/attendance-check/:school_id", async (req,res)=>{
-  const r = await pool.query(
-    "SELECT * FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE",
-    [req.params.school_id]
-  );
-  res.json({exists:r.rows.length>0});
+app.get("/attendance-check/:school_id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE LIMIT 1",
+      [req.params.school_id]
+    );
+
+    res.json({ exists: result.rows.length > 0 });
+
+  } catch (err) {
+    res.status(500).send("Error");
+  }
 });
 
 app.post("/attendance", async (req,res)=>{

@@ -168,7 +168,10 @@ app.get("/dashboard/:school_id", async (req, res) => {
       "SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE school_id=$1",
       [id]
     );
-
+const today = await pool.query(
+  "SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE school_id=$1 AND DATE(date_paid)=CURRENT_DATE",
+  [id]
+);
     const attendance = await pool.query(
       `SELECT 
         COUNT(*) FILTER (WHERE status='present') AS present,
@@ -180,12 +183,14 @@ app.get("/dashboard/:school_id", async (req, res) => {
 
     res.json({
       total_collected: totalPaid.rows[0].total,
+      today_collection: today.rows[0].total, 
       total_fees: totalFees.rows[0].total,
       total_paid: totalPaid.rows[0].total,
       pending: totalFees.rows[0].total - totalPaid.rows[0].total,
       present: attendance.rows[0].present || 0,
       absent: attendance.rows[0].absent || 0
     });
+    
 
   } catch (err) {
     console.error(err);

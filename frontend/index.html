@@ -142,13 +142,15 @@ async function loadDashboard(){
     const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
     const d = await res.json();
 
+    console.log("Dashboard data:", d); // DEBUG
+
     document.getElementById("dashboard").innerHTML = `
-      <p>💰 Total Collected: ₹${d.total_collected}</p>
-      <p>📅 Today Collection: ₹${d.today_collection}</p>
-      <p>📊 Total Fees: ₹${d.total_fees}</p>
-      <p>✅ Paid: ₹${d.total_paid}</p>
-      <p>❌ Pending: ₹${d.pending}</p>
-      <p>👨‍🎓 Present: ${d.present} | Absent: ${d.absent}</p>
+      <p>💰 Total Collected: ₹${d.total_collected || 0}</p>
+      <p>📅 Today Collection: ₹${d.today_collection || 0}</p>
+      <p>📊 Total Fees: ₹${d.total_fees || 0}</p>
+      <p>✅ Paid: ₹${d.total_paid || 0}</p>
+      <p>❌ Pending: ₹${d.pending || 0}</p>
+      <p>👨‍🎓 Present: ${d.present || 0} | Absent: ${d.absent || 0}</p>
     `;
     
   } catch (err) {

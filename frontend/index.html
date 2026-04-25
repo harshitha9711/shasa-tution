@@ -218,7 +218,17 @@ async function deleteStudent(id){
 
 // ================= ATTENDANCE =================
 let attendance={};
+function mark(id, status){
+  attendance[id] = status;
 
+  const row = document.getElementById(`row-${id}`);
+
+  if(status === "present"){
+    row.style.background = "#d1fae5"; // green
+  } else {
+    row.style.background = "#fee2e2"; // red
+  }
+}
 async function startAttendance(){
   const check = await fetch(`${BASE}/attendance-check/${user.school_id}`);
   const r = await check.json();

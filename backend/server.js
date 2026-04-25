@@ -94,15 +94,54 @@ app.put("/students/:id", async (req,res)=>{
 
 
 // ATTENDANCE
-
+// ================= ATTENDANCE CHECK =================
 app.get("/attendance-check/:school_id", async (req, res) => {
-  const result = await pool.query(
-    "SELECT 1 FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE LIMIT 1",
-    [req.params.school_id]
-  );
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE LIMIT 1",
+      [req.params.school_id]
+    );
 
-  res.json({ exists: result.rows.length > 0 });
+    res.json({ exists: result.rows.length > 0 });
+
+  } catch (err) {
+    res.status(500).send("Error");
+  }
 });
+
+
+// ================= SAVE ATTENDANCE =================
+app.post("/attendance", async (req,res)=>{
+  try {
+    const { records, school_id } = req.body;
+
+    // 🔥 PREVENT DUPLICATE
+    const check = await pool.query(
+      "SELECT 1 FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE LIMIT 1",
+      [school_id]
+    );
+
+    if(check.rows.length > 0){
+      return res.status(400).json({ message: "Already taken ❌" });
+    }
+
+    for(let r of records){
+      await pool.query(
+        "INSERT INTO attendance(student_id,date,status,school_id) VALUES($1,CURRENT_DATE,$2,$3)",
+        [r.student_id,r.status,school_id]
+      );
+    }
+
+    res.json({ message: "Saved ✅" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error");
+  }
+});
+
+
+// ================= VIEW ATTENDANCE =================
 app.get("/attendance/:school_id/:date", async (req, res) => {
   try {
     const { school_id, date } = req.params;
@@ -123,38 +162,6 @@ app.get("/attendance/:school_id/:date", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-app.post("/attendance", async (req, res) => {
-  try {
-    const { records, school_id } = req.body;
-
-    // 🔥 STRICT CHECK (no duplicates allowed)
-    const check = await pool.query(
-      "SELECT 1 FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE LIMIT 1",
-      [school_id]
-    );
-
-    if (check.rows.length > 0) {
-      return res.status(400).json({ message: "Already taken today ❌" });
-    }
-
-    // Insert attendance
-    for (let r of records) {
-      await pool.query(
-        "INSERT INTO attendance (student_id, date, status, school_id) VALUES ($1, CURRENT_DATE, $2, $3)",
-        [r.student_id, r.status, school_id]
-      );
-    }
-
-    res.json({ message: "Saved ✅" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error");
-  }
-});
-
-
-
 // FEES
 app.post("/fees", async (req,res)=>{
   const { student_id,amount,school_id } = req.body;

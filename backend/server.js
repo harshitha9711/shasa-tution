@@ -103,7 +103,26 @@ app.get("/attendance-check/:school_id", async (req, res) => {
 
   res.json({ exists: result.rows.length > 0 });
 });
+app.get("/attendance/:school_id/:date", async (req, res) => {
+  try {
+    const { school_id, date } = req.params;
 
+    const result = await pool.query(
+      `SELECT s.name, a.status
+       FROM attendance a
+       JOIN students s ON s.id = a.student_id
+       WHERE a.school_id = $1 
+       AND a.date::date = $2::date`,
+      [school_id, date]
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("VIEW ATTENDANCE ERROR:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
 app.post("/attendance", async (req, res) => {
   try {
     const { records, school_id } = req.body;

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+
+  <style>
+    body { font-family:Arial; background:#f4f6f8; padding:20px; }
+    .card {
+      background:white;
+      padding:15px;
+      margin:10px 0;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+    input {
+      width:100%;
+      padding:8px;
+      margin:5px 0;
+    }
+    button {
+      padding:8px 12px;
+      margin:5px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    .green { background:#28a745; color:white; }
+  </style>
+</head>
+
+<body>
+
+<h2>Admin Panel (Shasa Tech)</h2>
+
+<div class="card">
+  <h3>Create School</h3>
+  <input id="schoolName" placeholder="School Name">
+  <button class="green" onclick="createSchool()">Create School</button>
+</div>
+
+<div class="card">
+  <h3>Create Tutor Login</h3>
+  <input id="name" placeholder="Name">
+  <input id="email" placeholder="Email">
+  <input id="password" placeholder="Password">
+  <input id="schoolId" placeholder="School ID">
+
+  <button class="green" onclick="createUser()">Create Tutor</button>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+  alert("Access Denied ❌");
+  window.location.href = "login.html";
+}
+async function createSchool(){
+  const name = document.getElementById("schoolName").value;
+
+  const res = await fetch("http://localhost:5000/admin/create-school", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ name })
+  });
+
+  const data = await res.json();
+
+  alert("School created ✅\nSchool ID: " + data.id);
+}
+
+
+async function createUser(){
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const school_id = document.getElementById("schoolId").value;
+
+  await fetch("http://localhost:5000/admin/create-user", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name,
+      email,
+      password,
+      role:"teacher",
+      school_id
+    })
+  });
+
+  alert("Tutor login created ✅");
+}
+
+</script>
+
+</body>
+</html>

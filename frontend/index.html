@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shasa Tech</title>
+
+  <style>
+    body { font-family:'Segoe UI'; background:#eef2f7; margin:0; }
+    header { background:#1e3a8a; color:white; padding:15px; display:flex; justify-content:space-between; }
+    .container { max-width:1000px; margin:auto; padding:20px; }
+
+    .card {
+      background:white;
+      padding:15px;
+      margin:15px 0;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    input, select {
+      width:100%;
+      padding:8px;
+      margin:5px 0;
+      border:1px solid #ccc;
+      border-radius:5px;
+    }
+
+    button {
+      padding:6px 12px;
+      margin:5px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    }
+
+    .green { background:#10b981; color:white; }
+    .red { background:#ef4444; color:white; }
+    .blue { background:#3b82f6; color:white; }
+    .yellow { background:#f59e0b; }
+
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+    }
+
+    .box {
+      padding:10px;
+      border-radius:8px;
+      color:white;
+      text-align:center;
+      font-weight:bold;
+    }
+
+    .b1 { background:#3b82f6; }
+    .b2 { background:#10b981; }
+    .b3 { background:#f59e0b; }
+    .b4 { background:#6366f1; }
+    .b5 { background:#ef4444; }
+    .b6 { background:#8b5cf6; }
+
+    li {
+      background:#f9fafb;
+      padding:10px;
+      margin:5px 0;
+      border-radius:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h2 id="title">Shasa Tech</h2>
+  <button onclick="logout()" class="red">Logout</button>
+</header>
+
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <div class="card">
+    <h3>Dashboard</h3>
+    <button class="blue" onclick="loadDashboard()">Refresh</button>
+    <div id="dashboard" class="grid"></div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="card">
+    <h3>Add Student</h3>
+    <input id="name" placeholder="Name">
+    <input id="email" placeholder="Email">
+    <input id="class" placeholder="Class">
+    <input id="phone" placeholder="Phone">
+    <button class="green" onclick="addStudent()">Add</button>
+    <button class="blue" onclick="loadStudents()">Load</button>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="card">
+    <h3>Attendance</h3>
+    <button class="blue" onclick="startAttendance()">Take Attendance</button>
+  </div>
+
+  <div class="card">
+  <h3>View Attendance</h3>
+
+  <input type="date" id="attDate">
+  <button class="blue" onclick="viewAttendance()">View</button>
+
+  <ul id="attList"></ul>
+</div>
+  <!-- FEES -->
+  <div class="card">
+    <h3>Fees</h3>
+
+    <select id="feeStudent"></select>
+    <input id="feeAmount" placeholder="Total Fee">
+    <select id="feeType">
+      <option value="monthly">Monthly</option>
+      <option value="one-time">One-Time</option>
+    </select>
+    <input id="feeMonth" placeholder="Month">
+
+    <button class="green" onclick="addFees()">Add Fees</button>
+    <button class="blue" onclick="loadFees()">Load Fees</button>
+
+    <ul id="list"></ul>
+  </div>
+
+</div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href="login.html";
+
+// SCHOOL NAME
+fetch(`http://localhost:5000/school/${user.school_id}`)
+.then(r=>r.json())
+.then(d=>{
+  document.getElementById("title").innerText = d.name;
+});
+
+// DASHBOARD
+async function loadDashboard(){
+  try {
+    console.log("Dashboard clicked ✅");
+
+    const res = await fetch(`http://localhost:5000/dashboard/${user.school_id}`);
+
+    console.log("Response status:", res.status);
+
+    const d = await res.json();
+    console.log("Data:", d);
+
+    document.getElementById("dashboard").innerHTML = `
+      <div>💰 Total Collected: ₹${d.total_collected}</div>
+      <div>📅 Today Collection: ₹${d.today_collection}</div>
+      <div>📊 Total Fees: ₹${d.total_fees}</div>
+      <div>✅ Paid: ₹${d.total_paid}</div>
+      <div>❌ Pending: ₹${d.pending}</div>
+      <div>👨‍🎓 Present: ${d.present} | Absent: ${d.absent}</div>
+    `;
+
+  } catch (err) {
+    console.error("Dashboard error ❌", err);
+    alert("Dashboard failed ❌");
+  }
+}
+// STUDENTS
+async function addStudent(){
+  const name=document.getElementById("name").value;
+  const email=document.getElementById("email").value;
+  const cls=document.getElementById("class").value;
+  const phone=document.getElementById("phone").value;
+
+  await fetch("http://localhost:5000/students",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name,email,class:cls,phone,school_id:user.school_id})
+  });
+
+  alert("Added");
+}
+
+async function loadStudents(){
+  const res = await fetch(`http://localhost:5000/students/${user.school_id}`);
+  const data = await res.json();
+
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  data.forEach(s=>{
+    const li=document.createElement("li");
+    li.innerHTML=`${s.name} (${s.class})
+    <div>
+      <button class="yellow" onclick="editStudent(${s.id},'${s.name}','${s.email}','${s.class}','${s.phone}')">Edit</button>
+      <button class="red" onclick="deleteStudent(${s.id})">Delete</button>
+    </div>`;
+    list.appendChild(li);
+  });
+
+  loadStudentsForFees();
+}
+
+async function deleteStudent(id){
+  await fetch(`http://localhost:5000/students/${id}`,{method:"DELETE"});
+  loadStudents();
+}
+
+async function editStudent(id,n,e,c,p){
+  const name=prompt("Name",n);
+  const email=prompt("Email",e);
+  const cls=prompt("Class",c);
+  const phone=prompt("Phone",p);
+
+  await fetch(`http://localhost:5000/students/${id}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name,email,class:cls,phone})
+  });
+
+  loadStudents();
+}
+
+// ATTENDANCE
+let attendance={},saved=false;
+
+async function startAttendance(){
+  const check=await fetch(`http://localhost:5000/attendance-check/${user.school_id}`);
+  const r=await check.json();
+  if(r.exists){alert("Already taken");return;}
+
+  const res=await fetch(`http://localhost:5000/students/${user.school_id}`);
+  const students=await res.json();
+
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  attendance={}; saved=false;
+
+  students.forEach(s=>{
+    attendance[s.id]="present";
+
+    const li=document.createElement("li");
+    li.innerHTML=`${s.name}
+    <div>
+      <button onclick="mark(${s.id},'present')">✔</button>
+      <button onclick="mark(${s.id},'absent')">❌</button>
+    </div>`;
+    list.appendChild(li);
+  });
+
+  const btn=document.createElement("button");
+  btn.innerText="Save Attendance";
+  btn.className="green";
+  btn.onclick=saveAttendance;
+  list.appendChild(btn);
+}
+
+function mark(id,s){
+  if(saved) return;
+  attendance[id]=s;
+}
+
+async function saveAttendance(){
+  const records=Object.keys(attendance).map(id=>({student_id:id,status:attendance[id]}));
+
+  await fetch("http://localhost:5000/attendance",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({records,school_id:user.school_id})
+  });
+
+  saved=true;
+  alert("Saved");
+}
+
+
+async function viewAttendance(){
+  const date = document.getElementById("attDate").value;
+
+  if (!date) {
+    alert("Select date ❌");
+    return;
+  }
+
+  const res = await fetch(`http://localhost:5000/attendance/${user.school_id}/${date}`);
+  const data = await res.json();
+
+  const list = document.getElementById("attList");
+  list.innerHTML = "";
+
+  let present = [];
+  let absent = [];
+
+  data.forEach(s => {
+    if (s.status === "present") present.push(s.name);
+    else absent.push(s.name);
+  });
+
+  list.innerHTML = `
+    <li><b>Present:</b> ${present.join(", ")}</li>
+    <li><b>Absent:</b> ${absent.join(", ")}</li>
+  `;
+}
+// FEES
+async function loadStudentsForFees(){
+  const res=await fetch(`http://localhost:5000/students/${user.school_id}`);
+  const data=await res.json();
+
+  const d=document.getElementById("feeStudent");
+  d.innerHTML="";
+  data.forEach(s=>{
+    const o=document.createElement("option");
+    o.value=s.id;
+    o.textContent=s.name;
+    d.appendChild(o);
+  });
+}
+
+async function addFees(){
+  const student_id=document.getElementById("feeStudent").value;
+  const amount=document.getElementById("feeAmount").value;
+  const type=document.getElementById("feeType").value;
+  const month=document.getElementById("feeMonth").value;
+
+  await fetch("http://localhost:5000/fees",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({student_id,amount,type,month,school_id:user.school_id})
+  });
+
+  loadFees();
+}
+
+async function loadFees(){
+  const res=await fetch(`http://localhost:5000/fees/${user.school_id}`);
+  const data=await res.json();
+
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  data.forEach(f=>{
+    let history="";
+    if(f.payments){
+      history=f.payments.map(p=>`₹${p.amount} (${p.date})`).join("<br>");
+    }
+
+    const li=document.createElement("li");
+    li.innerHTML=`
+      <div>
+        <b>${f.name}</b><br>
+        ₹${f.total} | Paid ₹${f.paid} | Pending ₹${f.pending}
+        <br><small>${history}</small>
+      </div>
+
+      <div>
+        <input id="pay-${f.student_id}" placeholder="Pay">
+        <button class="green" onclick="pay(${f.student_id})">Pay</button>
+        <button class="blue" onclick="sendWhatsApp('${f.name}',${f.pending})">WhatsApp</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+async function pay(id){
+  const amount=document.getElementById(`pay-${id}`).value;
+
+  await fetch("http://localhost:5000/payments",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({student_id:id,amount,school_id:user.school_id})
+  });
+
+  loadFees();
+}
+
+function sendWhatsApp(name,pending){
+  if(pending<=0){alert("No pending");return;}
+  const msg=`Hi ${name}, your pending fee is ₹${pending}. Please pay soon.`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+}
+
+// LOGOUT
+function logout(){
+  localStorage.removeItem("user");
+  window.location.href="login.html";
+}
+
+</script>
+
+</body>
+</html>

@@ -138,17 +138,23 @@ if (!user) window.location.href="login.html";
 
 // ================= DASHBOARD =================
 async function loadDashboard(){
-  const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
-  const d = await res.json();
+  try {
+    const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
+    const d = await res.json();
 
-  dashboard.innerHTML = `
-    <div class="box b1">💰 ₹${d.total_collected}</div>
-    <div class="box b2">📅 ₹${d.today_collection}</div>
-    <div class="box b3">📊 ₹${d.total_fees}</div>
-    <div class="box b4">✅ ₹${d.total_paid}</div>
-    <div class="box b5">❌ ₹${d.pending}</div>
-    <div class="box b6">👨‍🎓 ${d.present} | ${d.absent}</div>
-  `;
+    document.getElementById("dashboard").innerHTML = `
+      <p>💰 Total Collected: ₹${d.total_collected}</p>
+      <p>📅 Today Collection: ₹${d.today_collection}</p>
+      <p>📊 Total Fees: ₹${d.total_fees}</p>
+      <p>✅ Paid: ₹${d.total_paid}</p>
+      <p>❌ Pending: ₹${d.pending}</p>
+      <p>👨‍🎓 Present: ${d.present} | Absent: ${d.absent}</p>
+    `;
+    
+  } catch (err) {
+    console.error(err);
+    alert("Dashboard error ❌");
+  }
 }
 
 // ================= STUDENTS =================

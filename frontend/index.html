@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <title>Shasa Tech</title>
@@ -46,6 +47,7 @@
       align-items:center;
     }
   </style>
+
 </head>
 
 <body>
@@ -71,6 +73,10 @@
   <input id="phone" placeholder="Phone">
   <button class="green" onclick="addStudent()">Add</button>
   <button class="blue" onclick="loadStudents()">Load</button>
+
+  <!-- ✅ NEW: Separate student list -->
+
+  <ul id="studentList"></ul>
 </div>
 
 <div class="card">
@@ -97,6 +103,9 @@
   <input id="feeMonth" placeholder="Month">
   <button class="green" onclick="addFees()">Add Fees</button>
   <button class="blue" onclick="loadFees()">Load Fees</button>
+
+  <!-- ✅ Separate fee list -->
+
   <ul id="feeList"></ul>
 </div>
 
@@ -140,14 +149,15 @@ async function addStudent(){
     })
   });
   alert("Added");
+  loadStudents(); // ✅ FIX
 }
 
-// LOAD STUDENTS WITH EDIT DELETE
+// LOAD STUDENTS
 async function loadStudents(){
   const res = await fetch(`${BASE}/students/${user.school_id}`);
   const data = await res.json();
 
-  const list=document.getElementById("feeList");
+  const list=document.getElementById("studentList"); // ✅ FIX
   list.innerHTML="";
 
   data.forEach(s=>{
@@ -186,7 +196,7 @@ async function deleteStudent(id){
   loadStudents();
 }
 
-// ATTENDANCE WITH COLOR
+// ATTENDANCE
 let attendance={};
 
 async function startAttendance(){
@@ -253,6 +263,7 @@ async function addFees(){
       school_id:user.school_id
     })
   });
+
   loadFees();
 }
 
@@ -286,6 +297,7 @@ async function pay(id){
   });
 
   loadFees();
+  loadDashboard(); // ✅ bonus fix
 }
 
 function whatsapp(name,pending){
@@ -301,5 +313,6 @@ function logout(){
 }
 
 </script>
+
 </body>
 </html>

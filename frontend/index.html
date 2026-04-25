@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <title>Shasa Tech</title>
@@ -21,6 +20,7 @@
       width:100%;
       padding:8px;
       margin:5px 0;
+      border:1px solid #ccc;
       border-radius:5px;
     }
 
@@ -37,6 +37,27 @@
     .blue { background:#3b82f6; color:white; }
     .yellow { background:#f59e0b; }
 
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+    }
+
+    .box {
+      padding:10px;
+      border-radius:8px;
+      color:white;
+      text-align:center;
+      font-weight:bold;
+    }
+
+    .b1 { background:#3b82f6; }
+    .b2 { background:#10b981; }
+    .b3 { background:#f59e0b; }
+    .b4 { background:#6366f1; }
+    .b5 { background:#ef4444; }
+    .b6 { background:#8b5cf6; }
+
     li {
       background:#f9fafb;
       padding:10px;
@@ -47,7 +68,6 @@
       align-items:center;
     }
   </style>
-
 </head>
 
 <body>
@@ -59,55 +79,54 @@
 
 <div class="container">
 
-<div class="card">
-  <h3>Dashboard</h3>
-  <button class="blue" onclick="loadDashboard()">Refresh</button>
-  <div id="dashboard"></div>
-</div>
+  <!-- DASHBOARD -->
+  <div class="card">
+    <h3>Dashboard</h3>
+    <button class="blue" onclick="loadDashboard()">Refresh</button>
+    <div id="dashboard" class="grid"></div>
+  </div>
 
-<div class="card">
-  <h3>Add Student</h3>
-  <input id="name" placeholder="Name">
-  <input id="email" placeholder="Email">
-  <input id="classInput" placeholder="Class">
-  <input id="phone" placeholder="Phone">
-  <button class="green" onclick="addStudent()">Add</button>
-  <button class="blue" onclick="loadStudents()">Load</button>
+  <!-- STUDENTS -->
+  <div class="card">
+    <h3>Add Student</h3>
+    <input id="name" placeholder="Name">
+    <input id="email" placeholder="Email">
+    <input id="classInput" placeholder="Class">
+    <input id="phone" placeholder="Phone">
+    <button class="green" onclick="addStudent()">Add</button>
+    <button class="blue" onclick="loadStudents()">Load</button>
+    <ul id="studentList"></ul>
+  </div>
 
-  <!-- ✅ NEW: Separate student list -->
+  <!-- ATTENDANCE -->
+  <div class="card">
+    <h3>Attendance</h3>
+    <button class="blue" onclick="startAttendance()">Take Attendance</button>
+    <ul id="attendanceList"></ul>
+  </div>
 
-  <ul id="studentList"></ul>
-</div>
+  <!-- VIEW ATTENDANCE -->
+  <div class="card">
+    <h3>View Attendance</h3>
+    <input type="date" id="attDate">
+    <button class="blue" onclick="viewAttendance()">View</button>
+    <ul id="attList"></ul>
+  </div>
 
-<div class="card">
-  <h3>Attendance</h3>
-  <button class="blue" onclick="startAttendance()">Take Attendance</button>
-  <ul id="attendanceList"></ul>
-</div>
-
-<div class="card">
-  <h3>View Attendance</h3>
-  <input type="date" id="attDate">
-  <button class="blue" onclick="viewAttendance()">View</button>
-  <ul id="attList"></ul>
-</div>
-
-<div class="card">
-  <h3>Fees</h3>
-  <select id="feeStudent"></select>
-  <input id="feeAmount" placeholder="Total Fee">
-  <select id="feeType">
-    <option value="monthly">Monthly</option>
-    <option value="one-time">One-Time</option>
-  </select>
-  <input id="feeMonth" placeholder="Month">
-  <button class="green" onclick="addFees()">Add Fees</button>
-  <button class="blue" onclick="loadFees()">Load Fees</button>
-
-  <!-- ✅ Separate fee list -->
-
-  <ul id="feeList"></ul>
-</div>
+  <!-- FEES -->
+  <div class="card">
+    <h3>Fees</h3>
+    <select id="feeStudent"></select>
+    <input id="feeAmount" placeholder="Total Fee">
+    <select id="feeType">
+      <option value="monthly">Monthly</option>
+      <option value="one-time">One-Time</option>
+    </select>
+    <input id="feeMonth" placeholder="Month">
+    <button class="green" onclick="addFees()">Add Fees</button>
+    <button class="blue" onclick="loadFees()">Load Fees</button>
+    <ul id="feeList"></ul>
+  </div>
 
 </div>
 
@@ -117,25 +136,22 @@ const BASE = "https://shasa-backend.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
 if (!user) window.location.href="login.html";
 
-// SCHOOL NAME
-fetch(`${BASE}/school/${user.school_id}`)
-.then(r=>r.json())
-.then(d=>{
-  document.getElementById("title").innerText = d?.name || "Shasa Tech";
-});
-
-// DASHBOARD
+// ================= DASHBOARD =================
 async function loadDashboard(){
   const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
   const d = await res.json();
 
   dashboard.innerHTML = `
-    💰 ₹${d.total_collected} | Pending ₹${d.pending} <br>
-    👨‍🎓 Present ${d.present} | Absent ${d.absent}
+    <div class="box b1">💰 ₹${d.total_collected}</div>
+    <div class="box b2">📅 ₹${d.today_collection}</div>
+    <div class="box b3">📊 ₹${d.total_fees}</div>
+    <div class="box b4">✅ ₹${d.total_paid}</div>
+    <div class="box b5">❌ ₹${d.pending}</div>
+    <div class="box b6">👨‍🎓 ${d.present} | ${d.absent}</div>
   `;
 }
 
-// ADD STUDENT
+// ================= STUDENTS =================
 async function addStudent(){
   await fetch(`${BASE}/students`,{
     method:"POST",
@@ -143,25 +159,21 @@ async function addStudent(){
     body:JSON.stringify({
       name:name.value,
       email:email.value,
-      class:document.getElementById("classInput").value,
+      class:classInput.value,
       phone:phone.value,
       school_id:user.school_id
     })
   });
   alert("Added");
-  loadStudents(); // ✅ FIX
 }
 
-// LOAD STUDENTS
 async function loadStudents(){
   const res = await fetch(`${BASE}/students/${user.school_id}`);
   const data = await res.json();
 
-  const list=document.getElementById("studentList"); // ✅ FIX
-  list.innerHTML="";
-
+  studentList.innerHTML="";
   data.forEach(s=>{
-    list.innerHTML+=`
+    studentList.innerHTML+=`
     <li>
       ${s.name} (${s.class})
       <div>
@@ -174,7 +186,6 @@ async function loadStudents(){
   loadStudentsForFees();
 }
 
-// EDIT
 async function editStudent(id,n,e,c,p){
   const name=prompt("Name",n);
   const email=prompt("Email",e);
@@ -190,26 +201,24 @@ async function editStudent(id,n,e,c,p){
   loadStudents();
 }
 
-// DELETE
 async function deleteStudent(id){
   await fetch(`${BASE}/students/${id}`,{method:"DELETE"});
   loadStudents();
 }
 
-// ATTENDANCE
+// ================= ATTENDANCE =================
 let attendance={};
 
 async function startAttendance(){
   const res=await fetch(`${BASE}/students/${user.school_id}`);
   const students=await res.json();
 
-  const list=document.getElementById("attendanceList");
-  list.innerHTML="";
+  attendanceList.innerHTML="";
 
   students.forEach(s=>{
     attendance[s.id]="present";
 
-    list.innerHTML+=`
+    attendanceList.innerHTML+=`
     <li id="row-${s.id}">
       ${s.name}
       <div>
@@ -219,13 +228,13 @@ async function startAttendance(){
     </li>`;
   });
 
-  list.innerHTML+=`<button onclick="saveAttendance()" class="blue">Save</button>`;
+  attendanceList.innerHTML+=`<button onclick="saveAttendance()" class="blue">Save</button>`;
 }
 
 function mark(id,status){
   attendance[id]=status;
-  const row=document.getElementById(`row-${id}`);
-  row.style.background=status==="present" ? "#d1fae5" : "#fee2e2";
+  document.getElementById(`row-${id}`).style.background =
+    status==="present" ? "#d1fae5" : "#fee2e2";
 }
 
 async function saveAttendance(){
@@ -240,7 +249,27 @@ async function saveAttendance(){
   alert("Saved");
 }
 
-// FEES
+// ================= VIEW ATTENDANCE =================
+async function viewAttendance(){
+  const date = attDate.value;
+  if(!date) return alert("Select date");
+
+  const res = await fetch(`${BASE}/attendance/${user.school_id}/${date}`);
+  const data = await res.json();
+
+  let present=[], absent=[];
+  data.forEach(s=>{
+    if(s.status==="present") present.push(s.name);
+    else absent.push(s.name);
+  });
+
+  attList.innerHTML = `
+    <li><b>Present:</b> ${present.join(", ")}</li>
+    <li><b>Absent:</b> ${absent.join(", ")}</li>
+  `;
+}
+
+// ================= FEES =================
 async function loadStudentsForFees(){
   const res=await fetch(`${BASE}/students/${user.school_id}`);
   const data=await res.json();
@@ -263,7 +292,6 @@ async function addFees(){
       school_id:user.school_id
     })
   });
-
   loadFees();
 }
 
@@ -271,17 +299,15 @@ async function loadFees(){
   const res=await fetch(`${BASE}/fees/${user.school_id}`);
   const data=await res.json();
 
-  const list=document.getElementById("feeList");
-  list.innerHTML="";
-
+  feeList.innerHTML="";
   data.forEach(f=>{
-    list.innerHTML+=`
+    feeList.innerHTML+=`
     <li>
       ${f.name} | ₹${f.total} | Paid ₹${f.paid} | Pending ₹${f.pending}
       <div>
         <input id="pay-${f.student_id}" placeholder="Pay">
         <button onclick="pay(${f.student_id})" class="green">Pay</button>
-        <button onclick="whatsapp('${f.name}',${f.pending})" class="blue">WhatsApp</button>
+        <button onclick="sendWhatsApp('${f.name}',${f.pending})" class="blue">WhatsApp</button>
       </div>
     </li>`;
   });
@@ -297,22 +323,20 @@ async function pay(id){
   });
 
   loadFees();
-  loadDashboard(); // ✅ bonus fix
 }
 
-function whatsapp(name,pending){
-  if(pending<=0){alert("No pending");return;}
+function sendWhatsApp(name,pending){
+  if(pending<=0) return alert("No pending");
   const msg=`Hi ${name}, pending fee ₹${pending}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
 
-// LOGOUT
+// ================= LOGOUT =================
 function logout(){
   localStorage.clear();
   window.location.href="login.html";
 }
 
 </script>
-
 </body>
 </html>

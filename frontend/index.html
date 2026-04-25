@@ -265,22 +265,40 @@ async function saveAttendance(){
 
 // ================= VIEW ATTENDANCE =================
 async function viewAttendance(){
-  const date = attDate.value;
-  if(!date) return alert("Select date");
+  const date = document.getElementById("attDate").value;
 
-  const res = await fetch(`${BASE}/attendance/${user.school_id}/${date}`);
-  const data = await res.json();
+  if (!date) {
+    alert("Select date ❌");
+    return;
+  }
 
-  let present=[], absent=[];
-  data.forEach(s=>{
-    if(s.status==="present") present.push(s.name);
-    else absent.push(s.name);
-  });
+  try {
+    const res = await fetch(`${BASE}/attendance/${user.school_id}/${date}`);
+    const data = await res.json();
 
-  attList.innerHTML = `
-    <li><b>Present:</b> ${present.join(", ")}</li>
-    <li><b>Absent:</b> ${absent.join(", ")}</li>
-  `;
+    const list = document.getElementById("attList");
+    list.innerHTML = "";
+
+    if (data.length === 0) {
+      list.innerHTML = "<li>No attendance found ❌</li>";
+      return;
+    }
+
+    let present = [];
+    let absent = [];
+
+    data.forEach(s => {
+      if (s.status === "present") present.push(s.name);
+      else absent.push(s.name);
+    });
+
+    list.innerHTML = `
+      <li><b>Present:</b> ${present.join(", ")}</li>
+      <li><b>Absent:</b> ${absent.join(", ")}</li>
+    `;
+  } catch (err) {
+    alert("Error loading attendance ❌");
+  }
 }
 
 // ================= FEES =================

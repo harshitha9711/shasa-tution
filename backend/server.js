@@ -155,6 +155,43 @@ app.get("/fees/:school_id", async (req,res)=>{
   res.json(r.rows);
 });
 
+app.get("/dashboard/:school_id", async (req, res) => {
+  try {
+    const id = req.params.school_id;
+
+    const totalFees = await pool.query(
+      "SELECT COALESCE(SUM(amount),0) AS total FROM fees WHERE school_id=$1",
+      [id]
+    );
+
+    const totalPaid = await pool.query(
+      "SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE school_id=$1",
+      [id]
+    );
+
+    const attendance = await pool.query(
+      `SELECT 
+        COUNT(*) FILTER (WHERE status='present') AS present,
+        COUNT(*) FILTER (WHERE status='absent') AS absent
+       FROM attendance
+       WHERE school_id=$1 AND date=CURRENT_DATE`,
+      [id]
+    );
+
+    res.json({
+      total_collected: totalPaid.rows[0].total,
+      total_fees: totalFees.rows[0].total,
+      total_paid: totalPaid.rows[0].total,
+      pending: totalFees.rows[0].total - totalPaid.rows[0].total,
+      present: attendance.rows[0].present || 0,
+      absent: attendance.rows[0].absent || 0
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error");
+  }
+});
 // START
 app.listen(process.env.PORT || 5000, ()=>{
   console.log("Running 🚀");

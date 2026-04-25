@@ -20,7 +20,6 @@
       width:100%;
       padding:8px;
       margin:5px 0;
-      border:1px solid #ccc;
       border-radius:5px;
     }
 
@@ -36,27 +35,6 @@
     .red { background:#ef4444; color:white; }
     .blue { background:#3b82f6; color:white; }
     .yellow { background:#f59e0b; }
-
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-      gap:10px;
-    }
-
-    .box {
-      padding:10px;
-      border-radius:8px;
-      color:white;
-      text-align:center;
-      font-weight:bold;
-    }
-
-    .b1 { background:#3b82f6; }
-    .b2 { background:#10b981; }
-    .b3 { background:#f59e0b; }
-    .b4 { background:#6366f1; }
-    .b5 { background:#ef4444; }
-    .b6 { background:#8b5cf6; }
 
     li {
       background:#f9fafb;
@@ -79,64 +57,54 @@
 
 <div class="container">
 
-  <!-- DASHBOARD -->
-  <div class="card">
-    <h3>Dashboard</h3>
-    <button class="blue" onclick="loadDashboard()">Refresh</button>
-    <div id="dashboard" class="grid"></div>
-  </div>
+<div class="card">
+  <h3>Dashboard</h3>
+  <button class="blue" onclick="loadDashboard()">Refresh</button>
+  <div id="dashboard"></div>
+</div>
 
-  <!-- STUDENTS -->
-  <div class="card">
-    <h3>Add Student</h3>
-    <input id="name" placeholder="Name">
-    <input id="email" placeholder="Email">
-    <input id="class" placeholder="Class">
-    <input id="phone" placeholder="Phone">
-    <button class="green" onclick="addStudent()">Add</button>
-    <button class="blue" onclick="loadStudents()">Load</button>
-  </div>
+<div class="card">
+  <h3>Add Student</h3>
+  <input id="name" placeholder="Name">
+  <input id="email" placeholder="Email">
+  <input id="classInput" placeholder="Class">
+  <input id="phone" placeholder="Phone">
+  <button class="green" onclick="addStudent()">Add</button>
+  <button class="blue" onclick="loadStudents()">Load</button>
+</div>
 
-  <!-- ATTENDANCE -->
-  <div class="card">
-    <h3>Attendance</h3>
-    <button class="blue" onclick="startAttendance()">Take Attendance</button>
-  </div>
+<div class="card">
+  <h3>Attendance</h3>
+  <button class="blue" onclick="startAttendance()">Take Attendance</button>
+  <ul id="attendanceList"></ul>
+</div>
 
-  <div class="card">
+<div class="card">
   <h3>View Attendance</h3>
-
   <input type="date" id="attDate">
   <button class="blue" onclick="viewAttendance()">View</button>
-
   <ul id="attList"></ul>
 </div>
-  <!-- FEES -->
-  <div class="card">
-    <h3>Fees</h3>
 
-    <select id="feeStudent"></select>
-    <input id="feeAmount" placeholder="Total Fee">
-    <select id="feeType">
-      <option value="monthly">Monthly</option>
-      <option value="one-time">One-Time</option>
-    </select>
-    <input id="feeMonth" placeholder="Month">
-
-    <button class="green" onclick="addFees()">Add Fees</button>
-    <button class="blue" onclick="loadFees()">Load Fees</button>
-
-    <ul id="list"></ul>
-  </div>
-
+<div class="card">
+  <h3>Fees</h3>
+  <select id="feeStudent"></select>
+  <input id="feeAmount" placeholder="Total Fee">
+  <select id="feeType">
+    <option value="monthly">Monthly</option>
+    <option value="one-time">One-Time</option>
+  </select>
+  <input id="feeMonth" placeholder="Month">
+  <button class="green" onclick="addFees()">Add Fees</button>
+  <button class="blue" onclick="loadFees()">Load Fees</button>
+  <ul id="feeList"></ul>
 </div>
 
-<!-- ONLY CHANGE: added BASE and replaced URLs -->
+</div>
 
 <script>
 
 const BASE = "https://shasa-backend.onrender.com";
-
 const user = JSON.parse(localStorage.getItem("user"));
 if (!user) window.location.href="login.html";
 
@@ -144,65 +112,59 @@ if (!user) window.location.href="login.html";
 fetch(`${BASE}/school/${user.school_id}`)
 .then(r=>r.json())
 .then(d=>{
-  document.getElementById("title").innerText = d.name;
+  document.getElementById("title").innerText = d?.name || "Shasa Tech";
 });
 
 // DASHBOARD
 async function loadDashboard(){
-  try {
-    const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
-    const d = await res.json();
+  const res = await fetch(`${BASE}/dashboard/${user.school_id}`);
+  const d = await res.json();
 
-    document.getElementById("dashboard").innerHTML = `
-      <div>💰 Total Collected: ₹${d.total_collected}</div>
-      <div>📅 Today Collection: ₹${d.today_collection}</div>
-      <div>📊 Total Fees: ₹${d.total_fees}</div>
-      <div>✅ Paid: ₹${d.total_paid}</div>
-      <div>❌ Pending: ₹${d.pending}</div>
-      <div>👨‍🎓 Present: ${d.present} | Absent: ${d.absent}</div>
-    `;
-  } catch (err) {
-    alert("Dashboard failed ❌");
-  }
+  dashboard.innerHTML = `
+    💰 ₹${d.total_collected} | Pending ₹${d.pending} <br>
+    👨‍🎓 Present ${d.present} | Absent ${d.absent}
+  `;
 }
 
-// STUDENTS
+// ADD STUDENT
 async function addStudent(){
   await fetch(`${BASE}/students`,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      name: document.getElementById("name").value,
-      email: document.getElementById("email").value,
-      class: document.getElementById("class").value,
-      phone: document.getElementById("phone").value,
-      school_id: user.school_id
+      name:name.value,
+      email:email.value,
+      class:document.getElementById("classInput").value,
+      phone:phone.value,
+      school_id:user.school_id
     })
   });
   alert("Added");
 }
-  
 
+// LOAD STUDENTS WITH EDIT DELETE
 async function loadStudents(){
   const res = await fetch(`${BASE}/students/${user.school_id}`);
   const data = await res.json();
-  const list=document.getElementById("list");
+
+  const list=document.getElementById("feeList");
   list.innerHTML="";
 
   data.forEach(s=>{
-    const li=document.createElement("li");
-    li.innerHTML=`${s.name} (${s.class})`;
-    list.appendChild(li);
+    list.innerHTML+=`
+    <li>
+      ${s.name} (${s.class})
+      <div>
+        <button class="yellow" onclick="editStudent(${s.id},'${s.name}','${s.email}','${s.class}','${s.phone}')">Edit</button>
+        <button class="red" onclick="deleteStudent(${s.id})">Delete</button>
+      </div>
+    </li>`;
   });
 
   loadStudentsForFees();
 }
 
-async function deleteStudent(id){
-  await fetch(`${BASE}/students/${id}`,{method:"DELETE"});
-  loadStudents();
-}
-
+// EDIT
 async function editStudent(id,n,e,c,p){
   const name=prompt("Name",n);
   const email=prompt("Email",e);
@@ -218,44 +180,42 @@ async function editStudent(id,n,e,c,p){
   loadStudents();
 }
 
-// ATTENDANCE
-let attendance={},saved=false;
+// DELETE
+async function deleteStudent(id){
+  await fetch(`${BASE}/students/${id}`,{method:"DELETE"});
+  loadStudents();
+}
+
+// ATTENDANCE WITH COLOR
+let attendance={};
 
 async function startAttendance(){
-  const check=await fetch(`${BASE}/attendance-check/${user.school_id}`);
-  const r=await check.json();
-  if(r.exists){alert("Already taken");return;}
-
   const res=await fetch(`${BASE}/students/${user.school_id}`);
   const students=await res.json();
 
-  const list=document.getElementById("list");
+  const list=document.getElementById("attendanceList");
   list.innerHTML="";
-
-  attendance={}; saved=false;
 
   students.forEach(s=>{
     attendance[s.id]="present";
 
-    const li=document.createElement("li");
-    li.innerHTML=`${s.name}
-    <div>
-      <button onclick="mark(${s.id},'present')">✔</button>
-      <button onclick="mark(${s.id},'absent')">❌</button>
-    </div>`;
-    list.appendChild(li);
+    list.innerHTML+=`
+    <li id="row-${s.id}">
+      ${s.name}
+      <div>
+        <button onclick="mark(${s.id},'present')" class="green">✔</button>
+        <button onclick="mark(${s.id},'absent')" class="red">❌</button>
+      </div>
+    </li>`;
   });
 
-  const btn=document.createElement("button");
-  btn.innerText="Save Attendance";
-  btn.className="green";
-  btn.onclick=saveAttendance;
-  list.appendChild(btn);
+  list.innerHTML+=`<button onclick="saveAttendance()" class="blue">Save</button>`;
 }
 
-function mark(id,s){
-  if(saved) return;
-  attendance[id]=s;
+function mark(id,status){
+  attendance[id]=status;
+  const row=document.getElementById(`row-${id}`);
+  row.style.background=status==="present" ? "#d1fae5" : "#fee2e2";
 }
 
 async function saveAttendance(){
@@ -267,31 +227,7 @@ async function saveAttendance(){
     body:JSON.stringify({records,school_id:user.school_id})
   });
 
-  saved=true;
   alert("Saved");
-}
-
-async function viewAttendance(){
-  const date = document.getElementById("attDate").value;
-  if (!date) return alert("Select date ❌");
-
-  const res = await fetch(`${BASE}/attendance/${user.school_id}/${date}`);
-  const data = await res.json();
-
-  const list = document.getElementById("attList");
-  list.innerHTML = "";
-
-  let present = [], absent = [];
-
-  data.forEach(s => {
-    if (s.status === "present") present.push(s.name);
-    else absent.push(s.name);
-  });
-
-  list.innerHTML = `
-    <li><b>Present:</b> ${present.join(", ")}</li>
-    <li><b>Absent:</b> ${absent.join(", ")}</li>
-  `;
 }
 
 // FEES
@@ -299,13 +235,9 @@ async function loadStudentsForFees(){
   const res=await fetch(`${BASE}/students/${user.school_id}`);
   const data=await res.json();
 
-  const d=document.getElementById("feeStudent");
-  d.innerHTML="";
+  feeStudent.innerHTML="";
   data.forEach(s=>{
-    const o=document.createElement("option");
-    o.value=s.id;
-    o.textContent=s.name;
-    d.appendChild(o);
+    feeStudent.innerHTML+=`<option value="${s.id}">${s.name}</option>`;
   });
 }
 
@@ -328,18 +260,43 @@ async function loadFees(){
   const res=await fetch(`${BASE}/fees/${user.school_id}`);
   const data=await res.json();
 
-  const list=document.getElementById("list");
+  const list=document.getElementById("feeList");
   list.innerHTML="";
 
   data.forEach(f=>{
-    const li=document.createElement("li");
-    li.innerHTML=`${f.name} - Pending ₹${f.pending}`;
-    list.appendChild(li);
+    list.innerHTML+=`
+    <li>
+      ${f.name} | ₹${f.total} | Paid ₹${f.paid} | Pending ₹${f.pending}
+      <div>
+        <input id="pay-${f.student_id}" placeholder="Pay">
+        <button onclick="pay(${f.student_id})" class="green">Pay</button>
+        <button onclick="whatsapp('${f.name}',${f.pending})" class="blue">WhatsApp</button>
+      </div>
+    </li>`;
   });
 }
 
+async function pay(id){
+  const amount=document.getElementById(`pay-${id}`).value;
+
+  await fetch(`${BASE}/payments`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({student_id:id,amount,school_id:user.school_id})
+  });
+
+  loadFees();
+}
+
+function whatsapp(name,pending){
+  if(pending<=0){alert("No pending");return;}
+  const msg=`Hi ${name}, pending fee ₹${pending}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+}
+
+// LOGOUT
 function logout(){
-  localStorage.removeItem("user");
+  localStorage.clear();
   window.location.href="login.html";
 }
 

@@ -60,11 +60,13 @@
 </div>
 
 <script>
+const BASE="https://shasa-backend.onrender.com";
+
 async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  const res = await fetch("http://localhost:5000/login", {
+  const res = await fetch(`${BASE}/login`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({email,password})

@@ -172,15 +172,16 @@ async function addStudent(){
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      name:name.value,
-      email:email.value,
-      class:class.value,
-      phone:phone.value,
-      school_id:user.school_id
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      class: document.getElementById("class").value,
+      phone: document.getElementById("phone").value,
+      school_id: user.school_id
     })
   });
   alert("Added");
 }
+  
 
 async function loadStudents(){
   const res = await fetch(`${BASE}/students/${user.school_id}`);

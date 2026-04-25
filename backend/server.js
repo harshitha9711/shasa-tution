@@ -9,7 +9,6 @@ app.use(cors());
 app.use(express.json());
 
 // ================= DATABASE =================
-// 🔥 IMPORTANT: Works for BOTH local + Render
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || undefined,
   ssl: process.env.DATABASE_URL
@@ -25,6 +24,24 @@ const pool = new Pool({
 // ================= ROOT =================
 app.get("/", (req, res) => {
   res.send("Server running 🚀");
+});
+
+// ================= SCHOOL =================
+app.get("/school/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM schools WHERE id=$1",
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json("School not found");
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).send("Error");
+  }
 });
 
 // ================= LOGIN =================
@@ -43,7 +60,6 @@ app.post("/login", async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
     res.status(500).send("Login error");
   }
 });
@@ -117,7 +133,44 @@ app.get("/students/:school_id", async (req, res) => {
   }
 });
 
+app.delete("/students/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM students WHERE id=$1", [req.params.id]);
+    res.json("Deleted");
+  } catch (err) {
+    res.status(500).send("Error");
+  }
+});
+
+app.put("/students/:id", async (req, res) => {
+  try {
+    const { name, email, class: studentClass, phone } = req.body;
+
+    await pool.query(
+      "UPDATE students SET name=$1,email=$2,class=$3,phone=$4 WHERE id=$5",
+      [name, email, studentClass, phone, req.params.id]
+    );
+
+    res.json("Updated");
+  } catch (err) {
+    res.status(500).send("Error");
+  }
+});
+
 // ================= ATTENDANCE =================
+app.get("/attendance-check/:school_id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM attendance WHERE school_id=$1 AND date=CURRENT_DATE",
+      [req.params.school_id]
+    );
+
+    res.json({ exists: result.rows.length > 0 });
+  } catch (err) {
+    res.status(500).send("Error");
+  }
+});
+
 app.post("/attendance", async (req, res) => {
   try {
     const { records, school_id } = req.body;
@@ -257,7 +310,6 @@ app.get("/dashboard/:school_id", async (req, res) => {
       absent: attendance.rows[0].absent || 0,
     });
   } catch (err) {
-    console.error(err);
     res.status(500).send("Error");
   }
 });
